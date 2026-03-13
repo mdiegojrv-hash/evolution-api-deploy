@@ -3,16 +3,18 @@ const app = express();
 
 app.use(express.json());
 
-// Simular dados de teste
+// Dados simulados
 let messages = [];
-let qrCode = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=https://whatsapp.com";
 
-app.get("/health", (req, res ) => {
-  res.json({ status: "ok", timestamp: new Date() });
+app.get("/health", (req, res) => {
+  res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
 app.get("/qr", (req, res) => {
-  res.json({ qr: qrCode });
+  res.json({ 
+    qr: "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=whatsapp://send?phone=5592993262142",
+    status: "QR Code disponível"
+  } );
 });
 
 app.get("/messages", (req, res) => {
@@ -20,15 +22,27 @@ app.get("/messages", (req, res) => {
 });
 
 app.post("/webhook", (req, res) => {
-  const { message } = req.body;
+  const { message, from } = req.body;
   if (message) {
     messages.push({
       text: message,
-      timestamp: new Date(),
-      from: "webhook"
+      from: from || "webhook",
+      timestamp: new Date().toISOString()
     });
   }
-  res.json({ received: true });
+  res.json({ received: true, messageCount: messages.length });
+});
+
+app.get("/", (req, res) => {
+  res.json({ 
+    message: "WhatsApp Assistant API",
+    endpoints: {
+      health: "/health",
+      qr: "/qr",
+      messages: "/messages",
+      webhook: "POST /webhook"
+    }
+  });
 });
 
 const PORT = process.env.PORT || 3000;
